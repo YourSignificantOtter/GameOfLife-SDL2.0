@@ -35,6 +35,13 @@ GameOfLife::GameOfLife()
 		theGrid[i] = new Cell[gridHeight];
 	}
 
+	cells = new SDL_Rect*[gridWidth];
+	for (int i = 0; i < gridWidth; i++)
+		cells[i] = new SDL_Rect[gridHeight];
+
+	SetCellPositionSize();
+
+	updatePrevTick = 0;
 	fpsPrevTick = 0;
 	fpsCurrent = 0;
 	fpsFrames = 0; 
@@ -60,6 +67,10 @@ GameOfLife::~GameOfLife()
 		delete[] theGrid[i];
 	delete[] theGrid;
 
+	for (int i = 0; i < gridWidth; i++)
+		delete[] cells[i];
+	delete[] cells;
+
 	TTF_CloseFont(Sans);
 }
 
@@ -82,6 +93,9 @@ int GameOfLife::Play()
 			case SDLK_ESCAPE:
 				isRunning = false;
 				break;
+			case SDLK_r:
+				RandomizeBoard(75.0);
+				break;
 			}
 			break;
 		default:
@@ -89,9 +103,6 @@ int GameOfLife::Play()
 			break;
 		}
 	}
-
-	TimeStep();
-	RenderGrid();
 
 	//I Assume this is where the painting is
 	SDL_Color textColor = { 0, 0, 0};
@@ -104,7 +115,19 @@ int GameOfLife::Play()
 
 
 	//Render current scene and count the FPS
-	SDL_RenderPresent(gameRenderer);
+	if (SDL_GetTicks() - updatePrevTick >= UPDATE_INTERVAL * (float)1000)
+	{
+		for (int x = 0; x < gridWidth; x++)
+			for (int y = 0; y < gridHeight; y++)
+			{
+				int numNeighbors = GridGetNeighbors(x, y);
+				theGrid[x][y].SetNextState(GridApplyRules(theGrid[x][y].GetCurrentState(), numNeighbors));
+			}
+		TimeStep();
+		RenderGrid();
+		SDL_RenderPresent(gameRenderer);
+		updatePrevTick = SDL_GetTicks();
+	}
 
 	fpsFrames++;
 	if (fpsPrevTick <= SDL_GetTicks() - FPS_INTERVAL * (float)1000)
@@ -124,10 +147,12 @@ int GameOfLife::RandomizeBoard(float percentAlive)
 		for (int j = 0; j < gridHeight; j++)
 		{
 			int randomNum = rand() % 101; //number between 1 and 100
-			if (randomNum >= percentAlive)
+			if (randomNum <= percentAlive)
 				theGrid[i][j].SetNextState(CELL_LIVING);
 			else
 				theGrid[i][j].SetNextState(CELL_DEAD);
+
+			theGrid[i][j].TimeStep();
 		}
 
 	return 1;
@@ -143,16 +168,94 @@ int GameOfLife::TimeStep()
 	return 1;
 }
 
-int GameOfLife::RenderGrid()
+int GameOfLife::SetCellPositionSize()
 {
+	if (cells == NULL)
+	{
+		gameError = "Cells was not initialized properly!";
+		return -1;
+	}
+	else
+	{
+		int cellWidth = gameWindowWidth / gridWidth;
+		int cellHeight = gameWindowHeight / gridHeight;
 
+		for (int x = 0; x < gridWidth; x++)
+		{
+			for (int y = 0; y < gridHeight; y++)
+			{
+				cells[x][y].x = x * cellWidth;
+				cells[x][y].y = y * cellHeight;
+				cells[x][y].w = cellWidth;
+				cells[x][y].h = cellHeight;
+			}
+		}
+	}
 	return 1;
 }
 
-int GameOfLife::GetGridWidth(int *width)
+int GameOfLife::RenderGrid()
 {
-	*width = gridWidth;
+
+	for (int x = 0; x < gridWidth; x++)
+	{
+		for (int y = 0; y < gridHeight; y++)
+		{
+			if(theGrid[x][y].GetCurrentState() == CELL_LIVING)
+				SDL_SetRenderDrawColor(gameRenderer, 0x00, 0xFF, 0x00, 0xFF);
+			else
+				SDL_SetRenderDrawColor(gameRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+
+			SDL_RenderFillRect(gameRenderer, &cells[x][y]);
+		}
+	}
 	return 1;
+}
+
+cell_states GameOfLife::GridApplyRules(int currState, int numNeighbors)
+{
+	if (currState == CELL_LIVING)
+		if (numNeighbors != 2 || numNeighbors != 3)
+			return CELL_DEAD;
+		else
+			return CELL_LIVING;
+
+	if (currState == CELL_DEAD)
+		if (numNeighbors == 3)
+			return CELL_LIVING;
+		else
+			return CELL_DEAD;
+}
+
+int GameOfLife::GridGetNeighbors(int x, int y)
+{
+	int numNeighbors = 0;
+	int neighborX = x, neighborY = y;
+
+	for (int i = - 1; i <= 1; i++)
+	{
+		for (int j = - 1; j <= 1; j++)
+		{
+			if (i == 0 && j == 0)
+				continue;
+
+			neighborX = x + i;
+			neighborY = y + j;
+
+			if (x + i < 0 || x + i >= gridWidth)
+				i > 0 ? neighborX = 0 : neighborX = gridWidth - 1;
+			if (y + j < 0 || y + j >= gridHeight)
+				j > 0 ? neighborY = 0 : neighborY = gridHeight - 1;
+
+			numNeighbors += theGrid[neighborX][neighborY].GetCurrentState();
+		}
+	}
+	return numNeighbors;
+}
+
+int GameOfLife::GetGridWidth()
+{
+	return gridWidth;
 }
 
 int GameOfLife::SetGridWidth(int width)
@@ -161,10 +264,9 @@ int GameOfLife::SetGridWidth(int width)
 	return 1;
 }
 
-int GameOfLife::GetGridHeight(int *height)
+int GameOfLife::GetGridHeight()
 {
-	*height = gridHeight;
-	return 1;
+	return gridHeight;
 }
 
 int GameOfLife::SetGridHeight(int height)

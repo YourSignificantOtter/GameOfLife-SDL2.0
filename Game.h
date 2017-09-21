@@ -29,11 +29,13 @@ class GameOfLife
 		int RandomizeBoard(float percentAlive);
 		int TimeStep(void);
 		int RenderGrid(void);
+		int GridGetNeighbors(int x, int y);
+		cell_states GridApplyRules(int currState, int numNeighbors);
 
 		//Get and set
-		int GetGridWidth(int *width);
+		int GetGridWidth(void);
 		int SetGridWidth(int width);
-		int GetGridHeight(int *height);
+		int GetGridHeight(void);
 		int SetGridHeight(int height);
 		int GetGameState(game_state_types *state);
 		int SetGameState(game_state_types state);
@@ -45,6 +47,9 @@ class GameOfLife
 		int gridWidth;
 		int gridHeight;
 		Cell **theGrid;
+		SDL_Rect **cells;
+
+		int SetCellPositionSize(void);
 
 		bool isRunning;
 		game_state_types gameState;
@@ -64,6 +69,8 @@ class GameOfLife
 
 		//For FPS
 		const float FPS_INTERVAL = 1.00;
+		const float UPDATE_INTERVAL = 0.25;
+		uint32_t updatePrevTick;
 		uint32_t fpsPrevTick;
 		uint32_t fpsCurrent;
 		uint32_t fpsFrames; //numbers of frames that have occured

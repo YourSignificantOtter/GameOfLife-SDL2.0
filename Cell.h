@@ -2,8 +2,8 @@
 
 typedef enum
 {
-	CELL_LIVING,
 	CELL_DEAD,
+	CELL_LIVING,
 } cell_states;
 
 class Cell
@@ -12,7 +12,6 @@ class Cell
 		Cell();
 		~Cell();
 
-		int GetNeighbors(int xPos, int yPos);
 		int TimeStep(void);
 		int GetCurrentState(void);
 		int SetNextState(cell_states);
@@ -20,6 +19,4 @@ class Cell
 	private:
 		cell_states currentState;
 		cell_states nextState;
-
-
 };

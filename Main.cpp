@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
 	GameOfLife myGameOfLife = GameOfLife();
 	myGameOfLife.SetGameState(MENU);
-	myGameOfLife.RandomizeBoard(10.0);
+	myGameOfLife.RandomizeBoard(80.0);
 
 	bool gameRunning = true;
 

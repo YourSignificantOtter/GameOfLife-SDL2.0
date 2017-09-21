@@ -10,13 +10,6 @@ Cell::~Cell()
 
 }
 
-int Cell::GetNeighbors(int xPos, int yPos)
-{
-	int numNeighbors = 0;
-
-	return numNeighbors;
-}
-
 int Cell::TimeStep()
 {
 	currentState = nextState;
