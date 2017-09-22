@@ -35,12 +35,6 @@ GameOfLife::GameOfLife()
 		theGrid[i] = new Cell[gridHeight];
 	}
 
-	cells = new SDL_Rect*[gridWidth];
-	for (int i = 0; i < gridWidth; i++)
-		cells[i] = new SDL_Rect[gridHeight];
-
-	SetCellPositionSize();
-
 	updatePrevTick = 0;
 	fpsPrevTick = 0;
 	fpsCurrent = 0;
@@ -66,10 +60,6 @@ GameOfLife::~GameOfLife()
 	for (int i = 0; i < gridWidth; i++)
 		delete[] theGrid[i];
 	delete[] theGrid;
-
-	for (int i = 0; i < gridWidth; i++)
-		delete[] cells[i];
-	delete[] cells;
 
 	TTF_CloseFont(Sans);
 }
@@ -108,26 +98,27 @@ int GameOfLife::Play()
 	SDL_Color textColor = { 0, 0, 0};
 	SDL_Color bgColor = { 255, 255, 255 };
 	std::string fpsString = "FPS: " + std::to_string(fpsCurrent);
-	fpsSurface = TTF_RenderText_Shaded(Sans, fpsString.c_str(), textColor, bgColor);
+	fpsSurface = TTF_RenderText_Solid(Sans, fpsString.c_str(), textColor);
 	fpsTexture = SDL_CreateTextureFromSurface(gameRenderer, fpsSurface);
 	SDL_Rect fpsRect = { gameWindowWidth - 80, 0, 75, 60 };
-	SDL_RenderCopy(gameRenderer, fpsTexture, NULL, &fpsRect);
+	
 
 
 	//Render current scene and count the FPS
-	if (SDL_GetTicks() - updatePrevTick >= UPDATE_INTERVAL * (float)1000)
-	{
-		for (int x = 0; x < gridWidth; x++)
-			for (int y = 0; y < gridHeight; y++)
-			{
-				int numNeighbors = GridGetNeighbors(x, y);
-				theGrid[x][y].SetNextState(GridApplyRules(theGrid[x][y].GetCurrentState(), numNeighbors));
-			}
-		TimeStep();
-		RenderGrid();
-		SDL_RenderPresent(gameRenderer);
-		updatePrevTick = SDL_GetTicks();
-	}
+	//if (SDL_GetTicks() - updatePrevTick >= UPDATE_INTERVAL * (float)1000)
+	//{
+	for (int x = 0; x < gridWidth; x++)
+		for (int y = 0; y < gridHeight; y++)
+		{
+			int numNeighbors = GridGetNeighbors(x, y);
+			theGrid[x][y].SetNextState(GridApplyRules(theGrid[x][y].GetCurrentState(), numNeighbors));
+		}
+	TimeStep();
+	RenderGrid();
+	SDL_RenderCopy(gameRenderer, fpsTexture, NULL, &fpsRect);
+	SDL_RenderPresent(gameRenderer);
+	updatePrevTick = SDL_GetTicks();
+	//}
 
 	fpsFrames++;
 	if (fpsPrevTick <= SDL_GetTicks() - FPS_INTERVAL * (float)1000)
@@ -146,12 +137,7 @@ int GameOfLife::RandomizeBoard(float percentAlive)
 	for(int i = 0; i < gridWidth; i++)
 		for (int j = 0; j < gridHeight; j++)
 		{
-			int randomNum = rand() % 101; //number between 1 and 100
-			if (randomNum <= percentAlive)
-				theGrid[i][j].SetNextState(CELL_LIVING);
-			else
-				theGrid[i][j].SetNextState(CELL_DEAD);
-
+			theGrid[i][j].SetNextState((cell_states)((rand() / (float)100) < percentAlive));
 			theGrid[i][j].TimeStep();
 		}
 
@@ -168,45 +154,29 @@ int GameOfLife::TimeStep()
 	return 1;
 }
 
-int GameOfLife::SetCellPositionSize()
-{
-	if (cells == NULL)
-	{
-		gameError = "Cells was not initialized properly!";
-		return -1;
-	}
-	else
-	{
-		int cellWidth = gameWindowWidth / gridWidth;
-		int cellHeight = gameWindowHeight / gridHeight;
-
-		for (int x = 0; x < gridWidth; x++)
-		{
-			for (int y = 0; y < gridHeight; y++)
-			{
-				cells[x][y].x = x * cellWidth;
-				cells[x][y].y = y * cellHeight;
-				cells[x][y].w = cellWidth;
-				cells[x][y].h = cellHeight;
-			}
-		}
-	}
-	return 1;
-}
 
 int GameOfLife::RenderGrid()
 {
+
+	float cellWidth = gameWindowWidth / (float)gridWidth;
+	float cellHeight = gameWindowHeight / (float)gridHeight;
+
+	cellToRender.w = cellWidth;
+	cellToRender.h = cellHeight;
 
 	for (int x = 0; x < gridWidth; x++)
 	{
 		for (int y = 0; y < gridHeight; y++)
 		{
+			cellToRender.x = x * cellWidth;
+			cellToRender.y = y * cellHeight;
+			
 			if(theGrid[x][y].GetCurrentState() == CELL_LIVING)
 				SDL_SetRenderDrawColor(gameRenderer, 0x00, 0xFF, 0x00, 0xFF);
 			else
 				SDL_SetRenderDrawColor(gameRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 
-			SDL_RenderFillRect(gameRenderer, &cells[x][y]);
+			SDL_RenderFillRect(gameRenderer, &cellToRender);
 		}
 	}
 	return 1;
@@ -215,10 +185,10 @@ int GameOfLife::RenderGrid()
 cell_states GameOfLife::GridApplyRules(int currState, int numNeighbors)
 {
 	if (currState == CELL_LIVING)
-		if (numNeighbors != 2 || numNeighbors != 3)
-			return CELL_DEAD;
-		else
+		if (numNeighbors == 2 || numNeighbors == 3)
 			return CELL_LIVING;
+		else
+			return CELL_DEAD;
 
 	if (currState == CELL_DEAD)
 		if (numNeighbors == 3)

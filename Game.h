@@ -47,9 +47,7 @@ class GameOfLife
 		int gridWidth;
 		int gridHeight;
 		Cell **theGrid;
-		SDL_Rect **cells;
-
-		int SetCellPositionSize(void);
+		SDL_Rect cellToRender;
 
 		bool isRunning;
 		game_state_types gameState;
