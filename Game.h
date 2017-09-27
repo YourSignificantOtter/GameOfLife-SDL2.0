@@ -7,6 +7,7 @@
 #include <time.h>
 
 #include "Cell.h"
+#include "Menu.h"
 
 typedef enum 
 {
@@ -29,6 +30,7 @@ class GameOfLife
 		int RandomizeBoard(float percentAlive);
 		int TimeStep(void);
 		int RenderGrid(void);
+		int RenderMenu(void);
 		int GridGetNeighbors(int x, int y);
 		cell_states GridApplyRules(int currState, int numNeighbors);
 
@@ -37,8 +39,6 @@ class GameOfLife
 		int SetGridWidth(int width);
 		int GetGridHeight(void);
 		int SetGridHeight(int height);
-		int GetGameState(game_state_types *state);
-		int SetGameState(game_state_types state);
 		int GetIsRunning(bool *running);
 		std::string GetGameError(void);
 		
@@ -47,16 +47,23 @@ class GameOfLife
 		int gridWidth;
 		int gridHeight;
 		Cell **theGrid;
+		int DeleteGrid();
+		int CreateGrid();
 		SDL_Rect cellToRender;
 
 		bool isRunning;
 		game_state_types gameState;
 
+		int GameStateRunning();
+		int GameStatePaused();
+		int GameStateMenu();
+
+		Menu *gameMenu;
+
 		SDL_Event gameEvent;
 		SDL_Window *gameWindow;
 		SDL_Renderer *gameRenderer;
-		SDL_Surface *gameWindowSurface, *fpsSurface;
-		SDL_Texture *fpsTexture;
+		SDL_Surface *gameWindowSurface;
 		int gameWindowWidth, gameWindowHeight;
 		int gameWindowXPos, gameWindowYPos;
 

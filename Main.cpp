@@ -2,7 +2,6 @@
 #include <SDL_ttf.h>
 #include <stdlib.h>
 #include <iostream>
-#include "Window.h"
 #include "Game.h"
 
 
@@ -25,7 +24,6 @@ int main(int argc, char *argv[])
 	atexit(TTF_Quit);
 
 	GameOfLife myGameOfLife = GameOfLife();
-	myGameOfLife.SetGameState(MENU);
 	myGameOfLife.RandomizeBoard(80.0);
 
 	bool gameRunning = true;
@@ -34,9 +32,6 @@ int main(int argc, char *argv[])
 	{
 		if (myGameOfLife.Play() > 0)
 		{
-
-
-
 			myGameOfLife.GetIsRunning(&gameRunning); //Check if we are still running the game
 		}
 		else

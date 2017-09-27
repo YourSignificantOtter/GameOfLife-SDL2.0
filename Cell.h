@@ -4,6 +4,7 @@ typedef enum
 {
 	CELL_DEAD,
 	CELL_LIVING,
+	NUM_CELL_TYPES
 } cell_states;
 
 class Cell
