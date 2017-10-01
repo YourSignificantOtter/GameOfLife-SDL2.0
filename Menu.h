@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL.h>
+#include <SDL_ttf.h>
 #include <stdlib.h>
 #include <string>
 
@@ -25,20 +26,32 @@ typedef enum
 class Menu
 {
 public:
-	Menu(int width, int height);
+	Menu(int width, int height, int gridx, int gridy, TTF_Font *font);
 	~Menu();
 
-	int CheckButtonPress(int mouseX, int mouseY);
+	int CheckMenuPress(int mouseX, int mouseY);
+	int HandleTextInput(SDL_Event event, int focusIndex);
 	SDL_Rect *GetButtons();
 	int GetNumButtons();
+	int GetNumTextBoxes();
+	SDL_Rect *GetTextBoxes();
+	std::string GetTextBoxValue(int);
 	int WindowResized(int newWidth, int newHeight);
+	int GridResized(int newWidth, int newHeight);
+	int RenderMenu(SDL_Renderer *renderer);
 
 private:
 	void CreateButtons();
+	void CreateTextBoxes();
+
+	std::string textBoxValues[NUM_TXT_TYPE];
 
 	SDL_Rect buttons[NUM_BUTTON_TYPE];
 	SDL_Rect textBoxes[NUM_TXT_TYPE];
+	TTF_Font *menuFont;
 
 	int windowWidth;
 	int windowHeight;
+	int gridWidth;
+	int gridHeight;
 };

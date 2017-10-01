@@ -28,10 +28,10 @@ GameOfLife::GameOfLife()
 
 	SDL_GetWindowSize(gameWindow, &gameWindowWidth, &gameWindowHeight);
 
-	gameMenu = new Menu(gameWindowWidth, gameWindowHeight);
-
 	gridWidth = 128;
 	gridHeight = 72;
+
+	gameMenu = new Menu(gameWindowWidth, gameWindowHeight, gridWidth, gridHeight, Sans);
 
 	CreateGrid();
 
@@ -82,7 +82,7 @@ int GameOfLife::Play()
 		case SDL_MOUSEBUTTONDOWN:
 			int mouseX, mouseY;
 			SDL_GetMouseState(&mouseX, &mouseY);
-			if (gameMenu->CheckButtonPress(mouseX, mouseY) == OPEN_MENU_BTN)
+			if (gameMenu->CheckMenuPress(mouseX, mouseY) == OPEN_MENU_BTN)
 				gameState == RUNNING ? gameState = MENU : gameState == PAUSED ? gameState = MENU : gameState = RUNNING;
 			break;
 		case SDL_KEYDOWN:
@@ -212,41 +212,59 @@ int GameOfLife::GameStatePaused()
 
 int GameOfLife::GameStateMenu()
 {
-	int numMenuButtons = gameMenu->GetNumButtons();
-	SDL_Rect *menuButtons = gameMenu->GetButtons();
-	SDL_SetRenderDrawColor(gameRenderer, 0x00, 0x00, 0xFF, 0x7F);
+	static int textBoxFocus = -1;
 
-	for (int i = 0; i < numMenuButtons; i++)
-	{
-		SDL_RenderFillRect(gameRenderer, &menuButtons[i]);
-	}
+	gameMenu->RenderMenu(gameRenderer);
 
 	SDL_RenderPresent(gameRenderer);
-
-
 	
 	if (gameEvent.type == SDL_MOUSEBUTTONDOWN)
 	{
 		int mouseX, mouseY;
 		SDL_GetMouseState(&mouseX, &mouseY);
-		switch (gameMenu->CheckButtonPress(mouseX, mouseY))
+		switch (gameMenu->CheckMenuPress(mouseX, mouseY))
 		{
 		case -1:
+			textBoxFocus = -1;
+			break;
+		case OPEN_MENU_BTN:
+			gameState = RUNNING;
 			break;
 		case SET_GRID_SIZE_BTN:
-			SetGridWidth(gridWidth * 2);
-			SetGridHeight(gridHeight * 2);
+			SetGridWidth(std::stoi(gameMenu->GetTextBoxValue(GRID_SIZE_X_TXT)));
+			SetGridHeight(std::stoi(gameMenu->GetTextBoxValue(GRID_SIZE_Y_TXT)));
+			gameMenu->GridResized(gridWidth, gridHeight);
 			break;
 		case SET_SCREEN_SIZE_BTN:
-			
+			SDL_SetWindowSize(gameWindow, std::stoi(gameMenu->GetTextBoxValue(SCREEN_SIZE_X_TXT)), std::stoi(gameMenu->GetTextBoxValue(SCREEN_SIZE_Y_TXT)));
+			gameWindowWidth = 640;
+			gameWindowHeight = 360;
+			gameMenu->WindowResized(gameWindowWidth, gameWindowHeight);
 			break;
 		case RANDOMIZE_BTN:
-			RandomizeBoard(50);
+			RandomizeBoard(std::stoi(gameMenu->GetTextBoxValue(RANDOMIZE_PERCENT_TXT)));
+			break;
+		case GRID_SIZE_X_TXT + NUM_BUTTON_TYPE:
+			textBoxFocus = GRID_SIZE_X_TXT;
+			break;
+		case GRID_SIZE_Y_TXT + NUM_BUTTON_TYPE:
+			textBoxFocus = GRID_SIZE_Y_TXT;
+			break;
+		case SCREEN_SIZE_X_TXT + NUM_BUTTON_TYPE:
+			textBoxFocus = SCREEN_SIZE_X_TXT;
+			break;
+		case SCREEN_SIZE_Y_TXT + NUM_BUTTON_TYPE:
+			textBoxFocus = SCREEN_SIZE_Y_TXT;
+			break;
+		case RANDOMIZE_PERCENT_TXT + NUM_BUTTON_TYPE:
+			textBoxFocus = RANDOMIZE_PERCENT_TXT;
 			break;
 		default:
 			break;
 		}
 	}
+	
+	gameMenu->HandleTextInput(gameEvent, textBoxFocus);
 	
 	return 1;
 }
@@ -305,6 +323,8 @@ cell_states GameOfLife::GridApplyRules(int currState, int numNeighbors)
 			return CELL_LIVING;
 		else
 			return CELL_DEAD;
+
+	return CELL_DEAD;
 }
 
 int GameOfLife::GridGetNeighbors(int x, int y)
