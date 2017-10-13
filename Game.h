@@ -11,7 +11,6 @@
 
 typedef enum 
 {
-	WAITING,
 	RUNNING,
 	PAUSED,
 	MENU
@@ -30,7 +29,6 @@ class GameOfLife
 		int RandomizeBoard(float percentAlive);
 		int TimeStep(void);
 		int RenderGrid(void);
-		int RenderMenu(void);
 		int GridGetNeighbors(int x, int y);
 		cell_states GridApplyRules(int currState, int numNeighbors);
 

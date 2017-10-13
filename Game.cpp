@@ -237,8 +237,6 @@ int GameOfLife::GameStateMenu()
 			break;
 		case SET_SCREEN_SIZE_BTN:
 			SDL_SetWindowSize(gameWindow, std::stoi(gameMenu->GetTextBoxValue(SCREEN_SIZE_X_TXT)), std::stoi(gameMenu->GetTextBoxValue(SCREEN_SIZE_Y_TXT)));
-			gameWindowWidth = 640;
-			gameWindowHeight = 360;
 			gameMenu->WindowResized(gameWindowWidth, gameWindowHeight);
 			break;
 		case RANDOMIZE_BTN:
